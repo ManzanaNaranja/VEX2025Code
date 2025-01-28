@@ -1,6 +1,7 @@
 #include "main.h"
 #include "lemlib/api.hpp"
-
+#include "lemlib/chassis/chassis.hpp"
+#include "lemlib/chassis/odom.hpp" // IWYU pragma: keep
 /**
  * A callback function for LLEMU's center button.
  *
@@ -50,6 +51,7 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
 
 lemlib::Drivetrain drivetrain(&left_mg, &right_mg, 11.5, lemlib::Omniwheel::NEW_275, 600, 2);
 lemlib::Chassis chassis(drivetrain, lateralPIDController, angularPIDController,sensors);
+
 
 enum LB_States {Default, Load, ReadyScore, Scoring, ManualMode};
 LB_States currentState = Default;
@@ -118,6 +120,7 @@ void on_center_button() {
  */
 void initialize() {
 	pros::lcd::initialize();
+	
 	chassis.calibrate();
 	pros::lcd::set_text(1, "Hello PROS User!");
 
@@ -155,8 +158,44 @@ void competition_initialize() {}
  */
 void autonomous() {
 	chassis.setPose(0, 0, 0);
-	// chassis.follow(AAA_txt, 15, 15000);
-	// chassis.moveToPoint(0, 24, 4000);
+
+	// chassis.moveToPoint(0,48,4000, {.maxSpeed = 70, .minSpeed=5,  .earlyExitRange=3});
+	// chassis.moveToPoint(0, 0, 4000, {.forwards = false, .maxSpeed = 70, });
+
+	lemlib::MoveToPointParams params1 = {.maxSpeed = 60, .minSpeed = 2, .earlyExitRange=1};
+	lemlib::TurnToPointParams params11 = {.maxSpeed = 60, .minSpeed = 2, .earlyExitRange=1};
+
+	lemlib::TurnToPointParams params2 = {.maxSpeed = 60, .minSpeed = 3, .earlyExitRange=1};
+	lemlib::TurnToPointParams params22 = {.direction = AngularDirection::CCW_COUNTERCLOCKWISE, .maxSpeed = 60, .minSpeed = 3, .earlyExitRange=1};
+	
+
+
+    // quick rotate + move
+	// chassis.moveToPoint(0, 24, 4000, params1);
+	// chassis.turnToPoint(24,24, 4000, params11);
+	// chassis.moveToPoint(24, 24, 4000, params1);
+	// chassis.turnToPoint(24,0, 4000, params11);
+	// chassis.moveToPoint(24,0, 4000,params1);
+	// chassis.turnToPoint(0,0, 4000, params11);
+	// chassis.moveToPoint(0,0, 4000,params1);
+	// chassis.turnToPoint(0,24, 4000, params11);
+
+	// rotate 
+	chassis.turnToPoint(24,0, 4000, params2);
+	chassis.turnToPoint(-24,0, 4000, params22);
+	chassis.turnToPoint(0,24, 4000, params2);
+	chassis.turnToPoint(24,24, 4000, params22);
+	chassis.turnToPoint(0,24, 4000, params2);
+
+
+
+
+
+
+	// chassis.turnToPoint(24,48,2000);
+	// chassis.moveToPoint(24,48,2000);
+		// chassis.follow(AAA_txt, 15, 15000);
+	
 	// chassis.turnToHeading(90, 2500,{.maxSpeed = 100});
 
 
@@ -191,7 +230,13 @@ void opcontrol() {
 			autonomous();
 		}
 		auto heading = std::to_string(imu.get_heading());
+		
 		pros::lcd::set_text(1,heading);
+		auto x = std::to_string(lemlib::getPose().x);
+		auto y = std::to_string(lemlib::getPose().y);
+		auto t = std::to_string(lemlib::getPose().theta);
+	  
+		pros::lcd::set_text(2, "Pose: " + x + " " + y + " " + t);
 		pros::delay(20);
 	} 
 	return;
