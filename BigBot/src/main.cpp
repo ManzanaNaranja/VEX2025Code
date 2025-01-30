@@ -35,7 +35,7 @@ lemlib::ControllerSettings angularPIDController(2, // proportional gain (kP)
                                                 .1, // integral gain (kI)
                                                 10, // derivative gain (kD)
                                                 3, // anti windup
-                                                1, // small error range, in inches
+                                                1, // small error ra		nge, in inches
                                                 100, // small error range timeout, in milliseconds
                                                 3, // large error range, in inches
                                                 500, // large error range timeout, in milliseconds
@@ -120,7 +120,6 @@ void initialize() {
 	pros::lcd::initialize();
 	chassis.calibrate();
 	pros::lcd::set_text(1, "Hello PROS User!");
-
 	pros::lcd::register_btn1_cb(on_center_button);
 }
 
@@ -186,6 +185,7 @@ void opcontrol() {
 	LadyBrown.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 
 
+
 	while(true) {
 		if(master.get_digital_new_press(DIGITAL_A)) {
 			autonomous();
@@ -203,6 +203,14 @@ void opcontrol() {
 		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);  // Prints status of the emulated screen LCDs
 
 	
+		double h = optical_sensor.get_hue();	
+		double s = optical_sensor.get_saturation();
+		double v = optical_sensor.get_brightness();
+		std::int32_t set_led_pwm(50);
+		pros::lcd::set_text(2,"Pose: " + std::to_string(h) + " "+ std::to_string(s) + " " + std::to_string(v));
+
+
+
 		int L = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
 		int R = master.get_analog(ANALOG_RIGHT_Y);  // Gets the turn left/right from right joystick
 
