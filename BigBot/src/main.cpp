@@ -19,6 +19,7 @@
 // ASSET(AAA_txt)
 int SM1_Positions[3] = {0,30,180};
 int lbindex = 0;
+bool mogoClampVal = false;
 
 pros::Imu imu(5);
 // drivetrain, chassis and PID controllers definitions===================================
@@ -49,13 +50,21 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
                             &imu // inertial sensor
 );
 
+pros::Task* color_sort_task = nullptr;
+
 lemlib::Drivetrain drivetrain(&left_mg, &right_mg, 11.5, lemlib::Omniwheel::NEW_275, 600, 2);
 lemlib::Chassis chassis(drivetrain, lateralPIDController, angularPIDController,sensors);
+pros::ADIDigitalOut mogoclamp ('A');
 
 
 enum LB_States {Default, Load, ReadyScore, Scoring, ManualMode};
 LB_States currentState = Default;
 int positions[] = {0,50,150,250};
+
+void my_task_fn(void* param) {
+    std::cout << "Function Parameters: " << (char*)param << std::endl;
+    // ...
+}
 
 
 void TickLB(int L1, int L2, int up, int down, int xbtn) {
@@ -118,13 +127,58 @@ void on_center_button() {
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
+int task1 = 1;
 void initialize() {
 	pros::lcd::initialize();
+
 	
 	chassis.calibrate();
 	pros::lcd::set_text(1, "Hello PROS User!");
 
 	pros::lcd::register_btn1_cb(on_center_button);
+
+	optical_sensor.set_integration_time(10);
+	optical_sensor.set_led_pwm(50);
+
+	// pros::Task task{[=] {
+	// 	    while(true) {
+
+
+	// 			pros::delay(1000);
+
+	// 		}
+
+    // }};
+}
+
+void intakeRank(int color) {
+
+	// while(true) {
+	// 	intake.move(100);
+	// 	pros::delay(10);
+	// }
+
+
+	intake.move(100);
+	bool blueDetected = false;
+	while(!blueDetected) {
+		double h = optical_sensor.get_hue();
+		if(h > 150) {
+			blueDetected = true;
+		}
+		pros::delay(10);
+		// if(blueDetected) {
+		// 	pros::lcd::set_text(3, "ring detected");
+		// } else {
+		// 	pros::lcd::set_text(3, "not detect");
+		// }
+
+	}
+
+	pros::delay(200);
+	intake.move(-127);
+	pros::delay(200);
+	intake.move(0);
 }
 
 /**
@@ -157,7 +211,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	chassis.setPose(0, 0, 0);
+	chassis.setPose(-132, -69, 111.12);
 
 	// chassis.moveToPoint(0,48,4000, {.maxSpeed = 70, .minSpeed=5,  .earlyExitRange=3});
 	// chassis.moveToPoint(0, 0, 4000, {.forwards = false, .maxSpeed = 70, });
@@ -167,7 +221,13 @@ void autonomous() {
 
 	lemlib::TurnToPointParams params2 = {.maxSpeed = 60, .minSpeed = 3, .earlyExitRange=1};
 	lemlib::TurnToPointParams params22 = {.direction = AngularDirection::CCW_COUNTERCLOCKWISE, .maxSpeed = 60, .minSpeed = 3, .earlyExitRange=1};
+
+
+	intakeRank(1);
 	
+	// mid rush
+	// chassis.moveToPoint(0,-120, 4000, {.maxSpeed = 70, .minSpeed=5,  .earlyExitRange=3});
+	// chassis.moveToPoint(-132, -69, 4000, {.forwards = false, .maxSpeed = 70, .minSpeed = 3 });
 
 
     // quick rotate + move
@@ -181,11 +241,11 @@ void autonomous() {
 	// chassis.turnToPoint(0,24, 4000, params11);
 
 	// rotate 
-	chassis.turnToPoint(24,0, 4000, params2);
-	chassis.turnToPoint(-24,0, 4000, params22);
-	chassis.turnToPoint(0,24, 4000, params2);
-	chassis.turnToPoint(24,24, 4000, params22);
-	chassis.turnToPoint(0,24, 4000, params2);
+	// chassis.turnToPoint(24,0, 4000, params2);
+	// chassis.turnToPoint(-24,0, 4000, params22);
+	// chassis.turnToPoint(0,24, 4000, params2);
+	// chassis.turnToPoint(24,24, 4000, params22);
+	// chassis.turnToPoint(0,24, 4000, params2);
 
 
 
@@ -225,27 +285,43 @@ void opcontrol() {
 	LadyBrown.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 
 
+
+
+
+
 	while(true) {
 		if(master.get_digital_new_press(DIGITAL_A)) {
 			autonomous();
 		}
-		auto heading = std::to_string(imu.get_heading());
+		// auto heading = std::to_string(imu.get_heading());
 		
-		pros::lcd::set_text(1,heading);
-		auto x = std::to_string(lemlib::getPose().x);
-		auto y = std::to_string(lemlib::getPose().y);
-		auto t = std::to_string(lemlib::getPose().theta);
+		// pros::lcd::set_text(1,heading);
+		// auto x = std::to_string(lemlib::getPose().x);
+		// auto y = std::to_string(lemlib::getPose().y);
+		// auto t = std::to_string(lemlib::getPose().theta);
 	  
-		pros::lcd::set_text(2, "Pose: " + x + " " + y + " " + t);
+		// pros::lcd::set_text(2, "Pose: " + x + " " + y + " " + t);
 		pros::delay(20);
 	} 
 	return;
 
 
 	while (true) {
+
 		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
 		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
 		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);  // Prints status of the emulated screen LCDs
+
+	
+		double h = optical_sensor.get_hue();	
+		double s = optical_sensor.get_saturation();
+		double v = optical_sensor.get_brightness();
+		std::int32_t set_led_pwm(50);
+		pros::lcd::set_text(2,"Pose: " + std::to_string(h) + " "+ std::to_string(s) + " " + std::to_string(v));
+		std::cout << h << std::endl;
+
+
+		// pros::lcd::set_text(4, std::to_string(h) + " " + std::to_string(s) + " " + std::to_string(v));
 
 	
 		int L = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
@@ -258,11 +334,17 @@ void opcontrol() {
 		int RArrowJP = master.get_digital_new_press(DIGITAL_RIGHT);
 
 		int aButtonJustPressed = master.get_digital_new_press(DIGITAL_A);
+		int yButtonJustPressed = master.get_digital_new_press(DIGITAL_Y);
 
 		int LBup = master.get_digital(DIGITAL_UP);
 		int LBdown = master.get_digital(DIGITAL_DOWN);
 		int LBright = master.get_digital(DIGITAL_RIGHT);
 		int Xbtn = master.get_digital(DIGITAL_X);
+
+		if(yButtonJustPressed) {
+			mogoClampVal = !mogoClampVal;
+			mogoclamp.set_value(mogoClampVal);
+		}
 
 		if(Intakeup) {
 			intake.move(127);
@@ -309,7 +391,7 @@ void opcontrol() {
         // // move the robot
         // chassis.arcade(leftY, rightX);
 
-   ;
+   
 		pros::delay(20);                               // Run for 20 ms then update
 	}
 }
