@@ -52,7 +52,7 @@ pros::MotorGroup left_mg({-17,11,-19,15});    // Creates a motor group with forw
 pros::MotorGroup right_mg({8,-5,6,-9});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
 pros::MotorGroup intake({10,-20});
 pros::MotorGroup LadyBrown({-1,2});
-pros::Optical optical_sensor({16});
+pros::Optical optical_sensor({13});
 pros::ADIDigitalOut clamp('A');
 pros::ADIDigitalOut doinker('B');
 pros::ADIDigitalIn lswitch('C');

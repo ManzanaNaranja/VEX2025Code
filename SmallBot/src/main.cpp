@@ -106,7 +106,9 @@ void initialize() {
 	chassis.calibrate();
 	pros::lcd::set_text(1, "Hello PROS User!");
 	pros::lcd::register_btn1_cb(on_center_button);
-  	pros::Optical optical_sensor({16});
+  	pros::Optical optical_sensor({13});
+	optical_sensor.set_integration_time(10);
+	optical_sensor.set_led_pwm(50);
 
 	
 }
@@ -273,6 +275,7 @@ int L2Button = master.get_digital(DIGITAL_L2);
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
+//////////////////////////AUTON FUNCTIONS////////////////////////////
 void inTakeRing(double color) {
 	int counter = 0;
 	while (counter < 100) {
@@ -288,39 +291,106 @@ void inTakeRing(double color) {
 
 }
 
-
- void autonomous() {
-
-	//AUTON////////////////////////////////////////////////
-	clamp.set_value(HIGH);
-	right_mg.move_velocity(-50);
-  	left_mg.move_velocity(-50);
-	pros::delay(1500);
+void moveTilesFast(double tiles) {
+	right_mg.move_velocity(127);
+  	left_mg.move_velocity(127);
+	pros::delay(280 * tiles);
 	right_mg.move_velocity(0);
   	left_mg.move_velocity(0);
+
+}
+
+void moveTiles(double tiles) {
+	right_mg.move_velocity(70);
+  	left_mg.move_velocity(70);
+	pros::delay(600 * tiles);
+	right_mg.move_velocity(0);
+  	left_mg.move_velocity(0);
+
+}
+
+void moveBackTiles(double tiles) {
+	right_mg.move_velocity(-70);
+  	left_mg.move_velocity(-70);
+	pros::delay(600 * tiles);
+	right_mg.move_velocity(0);
+  	left_mg.move_velocity(0);
+}
+
+void doink(int seconds) {
+    doinker.set_value(1);  // Activate doinker
+    pros::delay(1000*seconds);       // Keep it active for 0.5 seconds
+    doinker.set_value(0);  // Reset doinker
+}
+
+void rush() {
+	doinker.set_value(1);
+	moveTilesFast(1.3);
+	pros::delay(800);
+	moveBackTiles(0.5);
+	pros::delay(500);
+	doinker.set_value(0);
+}
+
+void turnleft90(double degrees) {
+	right_mg.move_velocity(50);  // Move right motor forward
+	left_mg.move_velocity(-50);  // Move left motor backward
+	pros::delay(450*degrees);            // Adjust this time for a 45-degree turn
+	right_mg.move_velocity(0);
+	left_mg.move_velocity(0);
+
+}
+
+void turnright90(double degrees) {
+	right_mg.move_velocity(-50);  // Move right motor forward
+	left_mg.move_velocity(50);  // Move left motor backward
+	pros::delay(450*degrees);            // Adjust this time for a 45-degree turn
+	right_mg.move_velocity(0);
+	left_mg.move_velocity(0);
+
+}
+
+void halfintake() {
+	while (true) {
+		intake.move(-100);
+		double h = optical_sensor.get_hue();
+		if (h > 150) {
+			intake.move(0);
+			break;
+		}
+	pros::delay(10);
+	} 
+}
+//////////////////////////AUTON FUNCTIONS////////////////////////////
+
+void autonomous() {
+
+	//AUTON////////////////////////////////////////////////
+	rush();
+	pros::delay(400);
+	turnleft90(1.5);
+		pros::delay(400);
+	//halfintake();
+	moveTiles(0.6);
+		pros::delay(400);
+	turnleft90(1.5);
+	pros::delay(300);
+
+	clamp.set_value(HIGH);
+	moveBackTiles(2.5);
+	pros::delay(300);
 	clamp.set_value(LOW);
-	pros::delay(1000);
+	turnleft90(0.45);
+	pros::delay(300);
 	intake.move(-100);
-	pros::delay(1000);
+	moveTiles(3);
 	intake.move(0);
 
 
-	//rotate Left
-	right_mg.move_velocity(50);  // Move right motor forward
-	left_mg.move_velocity(-50);  // Move left motor backward
-	pros::delay(155);            // Adjust this time for a 45-degree turn
-	right_mg.move_velocity(0);
-	left_mg.move_velocity(0);
-	pros::delay(450);    
 
-	//move to goal
-	intake.move(-127);
-	right_mg.move_velocity(50);
-  	left_mg.move_velocity(50);
-	pros::delay(2000);
-	right_mg.move_velocity(0);
-  	left_mg.move_velocity(0);
-	// //AUTON////////////////////////////////////////////////
+
+
+	 //AUTON////////////////////////////////////////////////
 
 
 
@@ -331,93 +401,6 @@ void inTakeRing(double color) {
 // // right_mg.move_velocity(0);
 // // left_mg.move_velocity(0);
 
-
-
-
-// ///SKILLS//////////////////////////////////////
-// //1===>2
-
-// 	clamp.set_value(HIGH);
-// 	right_mg.move_velocity(-50);
-//  left_mg.move_velocity(-50);
-// 	pros::delay(1500);
-// 	right_mg.move_velocity(0);
-//   	left_mg.move_velocity(0);
-// 	pros::delay(500);
-// 	clamp.set_value(LOW);
-// //2---> 3
-// //chassis.turnToHeading(45, 2000,{.maxSpeed = 100},true); // Add 'true' if it needs to block execution
-
-// right_mg.move_velocity(-50);  // Move right motor forward
-// left_mg.move_velocity(50);  // Move left motor backward
-// pros::delay(450);            // Adjust this time for a 45-degree turn
-// right_mg.move_velocity(0);
-// left_mg.move_velocity(0);
-
-
-
-
-// 	intake.move(-100);
-// 	right_mg.move_velocity(50);
-//   	left_mg.move_velocity(50);
-// 	pros::delay(1300);
-// 	right_mg.move_velocity(0);
-//   	left_mg.move_velocity(0);
-// 	intake.move(0);
-// 	pros::delay(1300);
-
-// 	//3--->4
-// 	right_mg.move_velocity(-50);  // Move right motor forward
-// left_mg.move_velocity(50);  // Move left motor backward
-// pros::delay(450);            // Adjust this time for a 45-degree turn
-// right_mg.move_velocity(0);
-// left_mg.move_velocity(0);
-// 	//chassis.turnToHeading(45, 2000);
-// 	right_mg.move_velocity(50);
-//   	left_mg.move_velocity(50);
-// 	pros::delay(1300);
-// 	right_mg.move_velocity(0);
-//   	left_mg.move_velocity(0);
-// 	pros::delay(1300);
-
-// //TURN AROUND AND SHOVE GOAL INTO CORNER
-// 	right_mg.move_velocity(-50);
-//   	left_mg.move_velocity(-50);
-// 	pros::delay(500);
-// 	//chassis.turnToHeading(180, 2000);
-// right_mg.move_velocity(-50);  // Move right motor forward
-// left_mg.move_velocity(50);  // Move left motor backward
-// pros::delay(900);            // Adjust this time for a 45-degree turn
-// right_mg.move_velocity(0);
-// left_mg.move_velocity(0);
-
-// 	pros::delay(1300);
-// 	right_mg.move_velocity(0);
-//   	left_mg.move_velocity(0);
-// 	pros::delay(1300);
-
-// 	clamp.set_value(HIGH);
-
-
-///SKILLS//////////////////////////////////////
-
-
-
-	// while (true) {
-	// intake.move(-127);
-	// pros::delay(20);
-	// pros::lcd::set_text(4, "Hello world");
-	// inTakeRing(optical_sensor.get_hue());
-	// }
-
-	// chassis.turnToHeading(90, 2500,{.maxSpeed = 100});
-
-
-
-    //  chassis.moveToPose(20,20, 0, 3000, {.lead = 0.3});
-
-	// auto heading = std::to_string(imu.get_heading());
-	// pros::lcd::set_text(1,heading);
 }
 
 /**
