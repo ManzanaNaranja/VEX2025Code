@@ -15,6 +15,7 @@
 #ifndef _PROS_MAIN_H_
 #define _PROS_MAIN_H_
 
+
 /**
  * If defined, some commonly used enums will have preprocessor macros which give
  * a shorter, more convenient naming pattern. If this isn't desired, simply
@@ -34,6 +35,11 @@
  */
 #define PROS_USE_LITERALS
 
+/////////AUTON/////////////////////////////////////
+#define LEFT_WHEELS_PORT {{-17,11,-19,15}}
+#define RIGHT_WHEELS_PORT {{8,-5,6,-9}}
+/////////AUTON/////////////////////////////////////
+
 #include "api.h"
 
 /**
@@ -42,10 +48,14 @@
 //#include "okapi/api.hpp"
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup left_mg({-17,11,-19});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
-pros::MotorGroup right_mg({8,-5,6});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
+pros::MotorGroup left_mg({-17,11,-19,15});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
+pros::MotorGroup right_mg({8,-5,6,-9});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
 pros::MotorGroup intake({10,-20});
 pros::MotorGroup LadyBrown({-1,2});
+pros::Optical optical_sensor({13});
+pros::ADIDigitalOut clamp('A');
+pros::ADIDigitalOut doinker('B');
+pros::ADIDigitalIn lswitch('C');
 
 
 
