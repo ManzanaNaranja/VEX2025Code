@@ -223,7 +223,6 @@ inline void updateClamp()
 
 
 
-
 bool l2 = false;
 bool activatedDoinker = false;
 inline void updateDoinker()
@@ -325,9 +324,9 @@ void doink(int seconds) {
 
 void rush() {
 	doinker.set_value(1);
-	moveTilesFast(1.3);
+	moveTilesFast(1.4);
 	pros::delay(800);
-	moveBackTiles(0.5);
+	moveBackTiles(1.3);
 	pros::delay(500);
 	doinker.set_value(0);
 }
@@ -350,41 +349,110 @@ void turnright90(double degrees) {
 
 }
 
-void halfintake() {
-	while (true) {
-		intake.move(-100);
+void intakeRank(int color) {
+
+	intake.move(-100);
+	bool blueDetected = false;
+	while(!blueDetected) {
 		double h = optical_sensor.get_hue();
-		if (h > 150) {
+		if(h > 150) {
+			blueDetected = true;
+		}
+		pros::delay(10);
+
+
+	}
+
+	pros::delay(200);
+	intake.move(-127);
+	pros::delay(200);
+	intake.move(0);
+}
+
+void intakeRank2() {
+	intake.move(-100);
+	while(true) {
+		double h = optical_sensor.get_hue();
+		if(h > 150) {
+			intake.move(0);
+			pros::delay(300);
+			intake.move(-127);
+			pros::delay(200);
 			intake.move(0);
 			break;
 		}
-	pros::delay(10);
-	} 
+		else if (h < 30)
+		{
+
+			pros::delay(400);
+			intake.move(0);
+			break;
+		}
+		
+		pros::delay(10);
+
+
+	}
 }
+
+void halfintake(int color) {
+	//BLUE ONLY
+	intake.move(-100);
+	bool blueDetected = false;
+	while(!blueDetected) {
+		double h = optical_sensor.get_hue();
+		if(h > 150) {
+			blueDetected = true;
+		}
+		pros::delay(10);
+		// if(blueDetected) {
+		// 	pros::lcd::set_text(3, "ring detected");
+		// } else {
+		// 	pros::lcd::set_text(3, "not detect");
+		// }
+
+	}
+	intake.move(0);
+}
+
 //////////////////////////AUTON FUNCTIONS////////////////////////////
 
 void autonomous() {
-
 	//AUTON////////////////////////////////////////////////
-	rush();
-	pros::delay(400);
-	turnleft90(1.5);
-		pros::delay(400);
-	//halfintake();
-	moveTiles(0.6);
-		pros::delay(400);
-	turnleft90(1.5);
-	pros::delay(300);
+	intakeRank2();
 
-	clamp.set_value(HIGH);
-	moveBackTiles(2.5);
-	pros::delay(300);
-	clamp.set_value(LOW);
-	turnleft90(0.45);
-	pros::delay(300);
-	intake.move(-100);
-	moveTiles(3);
-	intake.move(0);
+	// rush();
+	// pros::delay(400);
+	// turnleft90(1.3);
+	// pros::delay(300);
+	// moveTiles(0.4);
+	// // //NEED TO CHANGE TO RED SIDE
+	// halfintake(1);
+	// turnright90(0.37);
+	// clamp.set_value(HIGH);
+	// moveBackTiles(2.8);
+	// clamp.set_value(LOW);
+	// pros::delay(300);
+	// intake.move(-100);
+	// pros::delay(1000);
+	// intake.move(0);
+	// turnright90(0.25);
+	// moveTiles(3);
+	// intakeRank(1);
+	// pros::delay(200);
+	// moveTiles(0.1);
+	// pros::delay(200);
+	// intakeRank(1);
+	// turnright90(0.5);
+	// moveTiles(0.5);
+	// intakeRank(1);
+	// intakeRank(1);
+	// moveBackTiles(2);
+	// turnleft90(1.3);
+	// moveTiles(1.5);
+	// intakeRank(1);
+	// intakeRank(1);
+
 
 
 
@@ -482,7 +550,7 @@ void opcontrol() {
 		if(Intakeup) {
 			intake.move(127);
 		} else if(Intakedown) {
-			intake.move(-110);
+			intake.move(-127);
 		} else {
 			intake.brake();
 		}
