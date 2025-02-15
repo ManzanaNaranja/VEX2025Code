@@ -76,7 +76,7 @@ void on_center_button() {
 
 enum LB_States {Default, Load, Scoring, ManualMode};
 LB_States currentState = Default;
-int positions[] = {0,62,212};
+int positions[] = {0,62,225}; //  360-225 135
 
 
 void TickLB(int xbtn, int up, int down) {
@@ -99,7 +99,7 @@ void TickLB(int xbtn, int up, int down) {
 	} 
 	
 	if(currentState != ManualMode) {
-		LadyBrown.move_absolute(positions[currentState],80);
+		LadyBrown.move_absolute(positions[currentState],100);
 	} else {
 		if(up) {
 			// LadyBrown.move_absolute(0,100);
@@ -607,12 +607,12 @@ void opcontrol() {
 		// left_mg.move(L);                      // Sets left motor voltage
 		// right_mg.move(R);                     // Sets right motor voltage
 
-		// chassis.tank(L,R);
-        int leftY = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int rightX = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+		 chassis.tank(L,R);
+        // int leftY = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        // int rightX = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // // move the robot
-        chassis.arcade(leftY, rightX);
+       // chassis.arcade(leftY, rightX);
 
 		if (GameTimer = 10000) {
 		GameTimer = 0;
