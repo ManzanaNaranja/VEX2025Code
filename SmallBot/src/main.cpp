@@ -349,31 +349,14 @@ void turnright90(double degrees) {
 
 }
 
-void intakeRank(int color) {
 
+void intakeRank2(int color) {
+	////BLUE = 1, RED = 0, INT COLOR IS WHAT YOU WANT TO SCORE
 	intake.move(-100);
-	bool blueDetected = false;
-	while(!blueDetected) {
+	int timeout = pros::millis() + 2000;
+	while(pros::millis() < timeout) {
 		double h = optical_sensor.get_hue();
-		if(h > 150) {
-			blueDetected = true;
-		}
-		pros::delay(10);
-
-
-	}
-
-	pros::delay(200);
-	intake.move(-127);
-	pros::delay(200);
-	intake.move(0);
-}
-
-void intakeRank2() {
-	intake.move(-100);
-	while(true) {
-		double h = optical_sensor.get_hue();
-		if(h > 150) {
+		if((color == 0 && h > 150) || (color == 1 && h < 30)) {
 			intake.move(0);
 			pros::delay(300);
 			intake.move(-127);
@@ -381,7 +364,7 @@ void intakeRank2() {
 			intake.move(0);
 			break;
 		}
-		else if (h < 30)
+		else if ((color == 0 && h <30) || (color == 1 && h > 150))
 		{
 
 			pros::delay(400);
@@ -396,31 +379,29 @@ void intakeRank2() {
 }
 
 void halfintake(int color) {
-	//BLUE ONLY
-	intake.move(-100);
-	bool blueDetected = false;
-	while(!blueDetected) {
-		double h = optical_sensor.get_hue();
-		if(h > 150) {
-			blueDetected = true;
-		}
-		pros::delay(10);
-		// if(blueDetected) {
-		// 	pros::lcd::set_text(3, "ring detected");
-		// } else {
-		// 	pros::lcd::set_text(3, "not detect");
-		// }
+	////BLUE = 1, RED = 0
+	///COLOR 	IS WHAT YOU WANT
+    intake.move(-100);
+    int timeout = pros::millis() + 4000; // 4-second timeout
 
-	}
-	intake.move(0);
+    while (pros::millis() < timeout) {  // Ensures loop exits after timeout
+        double h = optical_sensor.get_hue();
+
+        if ((color == 1 && h > 150) || (color == 0 && h < 30)) { 
+            break; // Stop if the hue condition is met
+        }
+
+        pros::delay(10); // Small delay to prevent CPU overuse
+    }
+
+    intake.move(0); // Stop the intake
 }
+
 
 //////////////////////////AUTON FUNCTIONS////////////////////////////
 
 void autonomous() {
-	//AUTON////////////////////////////////////////////////
-	intakeRank2();
-
+	//AUTON///RED SIDE/////////////////////////////////////////////
 	// rush();
 	// pros::delay(400);
 	// turnleft90(1.3);
@@ -438,36 +419,43 @@ void autonomous() {
 	// intake.move(0);
 	// turnright90(0.25);
 	// moveTiles(3);
-	// intakeRank(1);
+	// intakeRank2();
 	// pros::delay(200);
 	// moveTiles(0.1);
 	// pros::delay(200);
-	// intakeRank(1);
+	// intakeRank2();
 	// turnright90(0.5);
 	// moveTiles(0.5);
-	// intakeRank(1);
-	// intakeRank(1);
+	// intakeRank2();
+	// intakeRank2();
 	// moveBackTiles(2);
 	// turnleft90(1.3);
 	// moveTiles(1.5);
-	// intakeRank(1);
-	// intakeRank(1);
+	// intakeRank2();
+		intakeRank2(1);
+	//AUTON////////////////////////////////////////////////
 
+	//AUTON/////BLUE SIDE///////////////////////////////////////////
+	// rush();
+	// pros::delay(400);
+	// turnleft90(1.5);
+	// pros::delay(400);
+	// halfintake(1);
+	// moveTiles(0.6);
+	// pros::delay(400);
+	// turnleft90(1.5);
+	// pros::delay(300);
+	// clamp.set_value(HIGH);
+	// moveBackTiles(2.5);
+	// pros::delay(300);
+	// clamp.set_value(LOW);
+	// turnleft90(0.45);
+	// pros::delay(300);
+	// intake.move(-100);
+	// moveTiles(3);
+	// intake.move(0);
+	//AUTON/////BLUE SIDE///////////////////////////////////////////
 
-
-
-
-
-	 //AUTON////////////////////////////////////////////////
-
-
-
-// ////MANUAL TURN CODE/////
-// // right_mg.move_velocity(50);  // Move right motor forward
-// // left_mg.move_velocity(-50);  // Move left motor backward
-// // pros::delay(450);            // Adjust this time for a 45-degree turn
-// // right_mg.move_velocity(0);
-// // left_mg.move_velocity(0);
 
 }
 
