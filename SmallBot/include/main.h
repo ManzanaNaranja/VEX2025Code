@@ -42,20 +42,24 @@
 
 #include "api.h"
 
-/**
- * You should add more #includes here
- */
-//#include "okapi/api.hpp"
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup left_mg({-15,14,-4,5});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
 pros::MotorGroup right_mg({20,-19,10,-9});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
 pros::MotorGroup intake({13,-12});
-pros::MotorGroup LadyBrown({2, 1});
+// pros::MotorGroup LadyBrown({-2, 1});
+pros::MotorGroup LadyBrownL({-2});
+pros::MotorGroup LadyBrownR({1});
+
 pros::Optical optical_sensor({3});
 pros::ADIDigitalOut clamp('A');
 pros::ADIDigitalOut doinker('B');
 pros::ADIDigitalIn lswitch('C');
+
+/**
+ * You should add more #includes here
+ *
+#include "okapi/api.hpp"
 
 
 /**
