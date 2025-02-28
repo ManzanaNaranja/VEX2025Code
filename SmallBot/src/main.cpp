@@ -73,6 +73,30 @@ void on_center_button() {
 // 	if(lbindex > 2) lbindex = 0;
 // }
 
+const int numStates = 3;
+int states[numStates] = {0,30,200};
+int currState = 0;
+int target = 0;
+
+
+void nextState() {
+	currState +=1;
+	if (currState == 3) {
+		currState=0;
+	}
+	target = states[currState];
+
+}
+
+void liftControl() {
+    LadyBrown.move_absolute(target, 100); // Move to target with velocity 100
+  }
+
+
+
+
+
+
 
 enum LB_States {Default, Load, Scoring, ManualMode};
 LB_States currentState = Default;
@@ -135,8 +159,13 @@ void initialize() {
 	optical_sensor.set_integration_time(10);
 	optical_sensor.set_led_pwm(50);
 	LadyBrown.tare_position();
-
-	
+	///////	///////	///////
+	pros::Task liftControlTask([] {
+        while (true) {
+            liftControl(); 
+            pros::delay(10);
+        }
+    });
 }
 // 	pros::Task task{[=] {
 // 		while (true) {
@@ -190,60 +219,7 @@ inline void updateClamp()
 	lastLimVal = limVal;
 
 
-	// bool newL = false;  // Declare newY outside the if block
-	// clamptimer2 = GameTimer;
 
-
-	// if(clamp.get_value() && lswitch.get_value() == 1 && clamptimer2-clamptimer1>=1000)
-	// {clamp.set_value(true);
-	// 	open = !open;
-	// }
-	// else if(clamp.get_value() == false && R>95)
-	// {clamp.set_value(false);
-	// 	clamptimer1=GameTimer;
-	// 	open=!open;
-	// }
-
-	// if (activated == false && lswitch.get_value() == 1) {
-	// l1 = !l1;
-	// clamp.set_value(l1);
-    // activated = true;  // Only deactivate if R <= 90 and loop exits naturally
-	// }
-
-
-
-// 	while (activated == true && lswitch.get_value() == 1) {
-//     if (R > 90) {   // Check first before setting activated to false
-//         newL = true;
-//         break;
-//     }
-//     activated = false;  // Only deactivate if R <= 90 and loop exits naturally
-// }
-
-//MANUAL CODE FOR CLAMP
- // Gets amount forward/backward from left joystick
-	
-/////////////////////////////////////////////////////////
-// 	bool newL = false;  // Declare newY outside the if block
-// 	int R = master.get_analog(ANALOG_RIGHT_X);  // Gets amount forward/backward from left joystick
-
-// 	if (R > 90) {
-// 		newL = true;  // Update its value if condition is met
-// 	}
-
-// 	if (newL == true)
-// 	{
-// 		if (activated == false)
-// 		{
-// 			l1 = !l1;
-// 			clamp.set_value(l1);
-// 			activated = true;
-// 		}
-// 	}
-// 	else
-// 	{
-// 		activated = false;
-// 	}
 }
 
 
@@ -304,79 +280,7 @@ int L2Button = master.get_digital(DIGITAL_L2);
  * from where it left off.
  */
 //////////////////////////AUTON FUNCTIONS////////////////////////////
-void inTakeRing(double color) {
-	int counter = 0;
-	while (counter < 100) {
-		if (color > 130) {
-			pros::delay(100);
-			intake.move(-127);
-			pros::delay(1000);			
-			intake.move(127);
-		}
-		pros::delay(100);
-		counter +=1;
-	} 
 
-}
-
-void moveTilesFast(double tiles) {
-	right_mg.move_velocity(127);
-  	left_mg.move_velocity(127);
-	pros::delay(280 * tiles);
-	right_mg.move_velocity(0);
-  	left_mg.move_velocity(0);
-
-}
-
-void moveTiles(double tiles) {
-	right_mg.move_velocity(70);
-  	left_mg.move_velocity(70);
-	pros::delay(600 * tiles);
-	right_mg.move_velocity(0);
-  	left_mg.move_velocity(0);
-
-}
-
-void moveBackTiles(double tiles) {
-	right_mg.move_velocity(-70);
-  	left_mg.move_velocity(-70);
-	pros::delay(600 * tiles);
-	right_mg.move_velocity(0);
-  	left_mg.move_velocity(0);
-}
-
-void doink(int seconds) {
-    doinker.set_value(1);  // Activate doinker
-    pros::delay(1000*seconds);       // Keep it active for 0.5 seconds
-    doinker.set_value(0);  // Reset doinker
-}
-
-void rush() {
-	doinker.set_value(1);
-	moveTilesFast(1.4);
-	pros::delay(800);
-	moveBackTiles(1.3);
-	pros::delay(500);
-	doinker.set_value(0);
-}
-
-void turnleft90(double degrees) {
-	right_mg.move_velocity(50);  // Move right motor forward
-	left_mg.move_velocity(-50);  // Move left motor backward
-	pros::delay(450*degrees);            // Adjust this time for a 45-degree turn
-	right_mg.move_velocity(0);
-	left_mg.move_velocity(0);
-
-}
-
-void turnright90(double degrees) {
-	right_mg.move_velocity(-50);  // Move right motor forward
-	left_mg.move_velocity(50);  // Move left motor backward
-	pros::delay(450*degrees);            // Adjust this time for a 45-degree turn
-	right_mg.move_velocity(0);
-	left_mg.move_velocity(0);
-
-}
 
 
 void intakeRank2(int color) {
@@ -430,60 +334,6 @@ void halfintake(int color) {
 //////////////////////////AUTON FUNCTIONS////////////////////////////
 
 void autonomous() {
-	//AUTON///RED SIDE/////////////////////////////////////////////
-	// rush();
-	// pros::delay(400);
-	// turnleft90(1.3);
-	// pros::delay(300);
-	// moveTiles(0.4);
-	// // //NEED TO CHANGE TO RED SIDE
-	// halfintake(1);
-	// turnright90(0.37);
-	// clamp.set_value(HIGH);
-	// moveBackTiles(2.8);
-	// clamp.set_value(LOW);
-	// pros::delay(300);
-	// intake.move(-100);
-	// pros::delay(1000);
-	// intake.move(0);
-	// turnright90(0.25);
-	// moveTiles(3);
-	// intakeRank2();
-	// pros::delay(200);
-	// moveTiles(0.1);
-	// pros::delay(200);
-	// intakeRank2();
-	// turnright90(0.5);
-	// moveTiles(0.5);
-	// intakeRank2();
-	// intakeRank2();
-	// moveBackTiles(2);
-	// turnleft90(1.3);
-	// moveTiles(1.5);
-	// intakeRank2();
-		intakeRank2(1);
-	//AUTON////////////////////////////////////////////////
-
-	//AUTON/////BLUE SIDE///////////////////////////////////////////
-	// rush();
-	// pros::delay(400);
-	// turnleft90(1.5);
-	// pros::delay(400);
-	// halfintake(1);
-	// moveTiles(0.6);
-	// pros::delay(400);
-	// turnleft90(1.5);
-	// pros::delay(300);
-	// clamp.set_value(HIGH);
-	// moveBackTiles(2.5);
-	// pros::delay(300);
-	// clamp.set_value(LOW);
-	// turnleft90(0.45);
-	// pros::delay(300);
-	// intake.move(-100);
-	// moveTiles(3);
-	// intake.move(0);
-	//AUTON/////BLUE SIDE///////////////////////////////////////////
 
 
 }
@@ -557,7 +407,11 @@ void opcontrol() {
 
 		// TickLB(L1Button, L2Button);
 
-
+			if (master.get_digital_new_press(DIGITAL_B)) { // Press "A" to change state
+				nextState();
+			}
+			liftControl(); // Keep adjusting position
+		
 
 
 		// if(YButtonJustPressed) {
@@ -575,14 +429,14 @@ void opcontrol() {
 
 		TickLB(XButtonJustPressed, LBup, LBdown);
 
-		// if(LBup) {
-		// 	LadyBrown.move(70);
-		// } else if(LBdown) {
-		// 	LadyBrown.move(-70);
-		// } else {
-		// 	LadyBrown.brake();
-		// 	LadyBrown.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-		// }
+		if(LBup) {
+			LadyBrown.move(70);
+		} else if(LBdown) {
+			LadyBrown.move(-70);
+		} else {
+			LadyBrown.brake();
+			LadyBrown.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+		}
 
 		// if(aButtonJustPressed) {
 		// 	nextLB();

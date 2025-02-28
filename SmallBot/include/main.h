@@ -36,8 +36,8 @@
 #define PROS_USE_LITERALS
 
 /////////AUTON/////////////////////////////////////
-#define LEFT_WHEELS_PORT {{-17,11,-19,15}}
-#define RIGHT_WHEELS_PORT {{8,-5,6,-9}}
+#define LEFT_WHEELS_PORT {{15,-14,4,-5}}
+#define RIGHT_WHEELS_PORT {{20,-19,10,-9}}
 /////////AUTON/////////////////////////////////////
 
 #include "api.h"
@@ -48,15 +48,14 @@
 //#include "okapi/api.hpp"
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup left_mg({-17,11,-19,15});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
-pros::MotorGroup right_mg({8,-5,6,-9});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
-pros::MotorGroup intake({10,-20});
-pros::MotorGroup LadyBrown({-2, 1});
-pros::Optical optical_sensor({13});
+pros::MotorGroup left_mg({-15,14,-4,5});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
+pros::MotorGroup right_mg({20,-19,10,-9});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
+pros::MotorGroup intake({13,-12});
+pros::MotorGroup LadyBrown({2, 1});
+pros::Optical optical_sensor({3});
 pros::ADIDigitalOut clamp('A');
 pros::ADIDigitalOut doinker('B');
 pros::ADIDigitalIn lswitch('C');
-
 
 
 /**
