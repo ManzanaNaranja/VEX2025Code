@@ -136,7 +136,28 @@ void initialize() {
 	optical_sensor.set_led_pwm(50);
 	LadyBrown.tare_position();
 
+
+	//////////////////////////////////COLOR SENSOR
+
+            double hue = optical_sensor.get_hue();
+
+            // Modify the conditions based on color needs
+            if (hue > 150) {  // Example: Detects blue
+                intake.move(-127);
+                pros::delay(1000);  // Adjust time as needed
+                intake.move(127);
+            } 
+            else if (hue < 30) {  // Example: Detects red
+                intake.move(127);
+                pros::delay(500);
+                intake.move(0);
+            }
+
+            pros::delay(100);  // Prevent CPU overload
 	
+
+
+	//////////////////////////////////////
 }
 // 	pros::Task task{[=] {
 // 		while (true) {
@@ -179,8 +200,8 @@ int ccc = 0;
 inline void updateClamp()
 {	
 	int limVal = lswitch.get_value();
-	int L1Button = master.get_digital(DIGITAL_L1);
-	int yyy = master.get_digital(DIGITAL_Y);
+	int L1Button = master.get_digital(DIGITAL_L2);
+	int yyy = master.get_digital(DIGITAL_B);
 	if(lastLimVal == 0 && limVal == 1 || yyy == 1) {
 		ccc = 0;
 	} else if (L1Button) {
@@ -257,7 +278,7 @@ bool activatedDoinker = false;
 inline void updateDoinker()
 {
 	
-int L2Button = master.get_digital(DIGITAL_L2);
+int L2Button = master.get_digital(DIGITAL_L1);
 	if (L2Button) {
 		doinker.set_value(1);
 	}
@@ -288,7 +309,7 @@ int L2Button = master.get_digital(DIGITAL_L2);
 	// {
 	// 	activatedDoinker = false;
 	// }
-	// //OLD CODE/////////////////////////////////
+	// //OLD CODE/////////////////////////F////////
 
 }
 
@@ -353,11 +374,12 @@ void doink(int seconds) {
 
 void rush() {
 	doinker.set_value(1);
-	moveTilesFast(1.4);
+	moveTilesFast(1.7);
 	pros::delay(800);
-	moveBackTiles(1.3);
-	pros::delay(500);
+	moveBackTiles(1.4);
 	doinker.set_value(0);
+
+	pros::delay(500);
 }
 
 void turnleft90(double degrees) {
@@ -386,8 +408,11 @@ void intakeRank2(int color) {
 	while(pros::millis() < timeout) {
 		double h = optical_sensor.get_hue();
 		if((color == 0 && h > 150) || (color == 1 && h < 30)) {
+			pros::delay(200);
 			intake.move(0);
-			pros::delay(300);
+			pros::delay(200);
+			intake.move(127);
+			pros::delay(200);
 			intake.move(-127);
 			pros::delay(200);
 			intake.move(0);
@@ -396,8 +421,10 @@ void intakeRank2(int color) {
 		else if ((color == 0 && h <30) || (color == 1 && h > 150))
 		{
 
+			intake.move(-100);
 			pros::delay(400);
 			intake.move(0);
+
 			break;
 		}
 		
@@ -411,7 +438,7 @@ void halfintake(int color) {
 	////BLUE = 1, RED = 0
 	///COLOR 	IS WHAT YOU WANT
     intake.move(-100);
-    int timeout = pros::millis() + 4000; // 4-second timeout
+    int timeout = pros::millis() + 2000; // 4-second timeout
 
     while (pros::millis() < timeout) {  // Ensures loop exits after timeout
         double h = optical_sensor.get_hue();
@@ -430,60 +457,152 @@ void halfintake(int color) {
 //////////////////////////AUTON FUNCTIONS////////////////////////////
 
 void autonomous() {
-	//AUTON///RED SIDE/////////////////////////////////////////////
-	// rush();
+	//SEMIS RED AUTON
+	clamp.set_value(HIGH);
+	moveBackTiles(2.6);
+	pros::delay(400);
+	clamp.set_value(LOW);
+	turnleft90(0.5);
+	intake.move(-110);
+	pros::delay(300);
+	intake.move(0);
+	moveTiles(0.5);
+	intakeRank2(1);
+	pros::delay(200);
+	moveTiles(0.5);
+	intakeRank2(1);
+	pros::delay(200);
+	moveTiles(0.5);
+	intakeRank2(1);
+	pros::delay(200);
+	turnleft90(1.3);
+	moveBackTiles(8);
+	clamp.set_value(HIGH);
+	moveTiles(1);
+
+
+
+
+
+	// AUTON///RED SIDE/////////////////////////////////////////////
+	/////////RUSH
+	// doinker.set_value(1);
+	// moveTilesFast(1.6);
+	// pros::delay(800);
+	// moveBackTiles(1.4);
+	// doinker.set_value(0);
+
+	// TURN 180AND SCORE
+	// pros::delay(500);
+	// turnright90(1.8);
+	// pros::delay(200);
+	// clamp.set_value(HIGH);
+	// moveBackTiles(0.6);
 	// pros::delay(400);
-	// turnleft90(1.3);
+	// clamp.set_value(LOW);
+	// intake.move(-110);
+	// pros::delay(300);
+	// intake.move(0);
+	// pros::delay(300);
+
+	// TURN TO NEARBY DONUT AND SCORE
+	// turnright90(0.5);
+	// moveTiles(1.3);
+	// intakeRank2(1);
+
+	// TURN LEFT AND SCORE
+	// turnleft90(1);
+	// moveTiles(1);
+	// intakeRank2(0);
+
+
+
+	////////////////RUSH AND TURN/////////////	
+
+	//rush();
+	// pros::delay(400);
+	// turnleft90(1.4);
 	// pros::delay(300);
 	// moveTiles(0.4);
-	// // //NEED TO CHANGE TO RED SIDE
-	// halfintake(1);
+	// halfintake(0);
+
 	// turnright90(0.37);
 	// clamp.set_value(HIGH);
 	// moveBackTiles(2.8);
 	// clamp.set_value(LOW);
 	// pros::delay(300);
+
 	// intake.move(-100);
-	// pros::delay(1000);
+	// pros::delay(200);
 	// intake.move(0);
 	// turnright90(0.25);
 	// moveTiles(3);
-	// intakeRank2();
+	// intakeRank2(0);
+
+
 	// pros::delay(200);
 	// moveTiles(0.1);
 	// pros::delay(200);
-	// intakeRank2();
-	// turnright90(0.5);
+	// intakeRank2(0);
+	// turnright90(0.4);
 	// moveTiles(0.5);
-	// intakeRank2();
-	// intakeRank2();
+	// intakeRank2(0);
+	// intakeRank2(0);
 	// moveBackTiles(2);
 	// turnleft90(1.3);
 	// moveTiles(1.5);
-	// intakeRank2();
-		intakeRank2(1);
-	//AUTON////////////////////////////////////////////////
+	// intakeRank2(0);
+	// intakeRank2(0);
+	// AUTON////////////////////////////////////////////////
 
-	//AUTON/////BLUE SIDE///////////////////////////////////////////
+	//AUTON/////BLUE SIDE///////////////////////////////////////////MOST RECENT
+		/////////RUSH
+		// clamp.set_value(HIGH);
+		// doinker.set_value(1);
+		// moveTilesFast(1.6);
+		// pros::delay(800);
+		// moveBackTiles(1.4);
+		// doinker.set_value(0);
+	
+		// //TURN 180AND SCORE
+		// pros::delay(500);
+		// turnright90(1.8);
+		// pros::delay(200);
+		// moveBackTiles(0.6);
+		// pros::delay(200);
+		// clamp.set_value(LOW);
+		// intake.move(-110);
+		// pros::delay(300);
+		// intake.move(0);
+		// pros::delay(300);
+
+		//TURN TO DONUT AND INTAKE
+
+
+
 	// rush();
+
 	// pros::delay(400);
 	// turnleft90(1.5);
-	// pros::delay(400);
-	// halfintake(1);
+	// pros::delay(300);
 	// moveTiles(0.6);
-	// pros::delay(400);
-	// turnleft90(1.5);
+	// halfintake(1);
+
+	// pros::delay(300);
+	// turnleft90(0.5);
 	// pros::delay(300);
 	// clamp.set_value(HIGH);
 	// moveBackTiles(2.5);
-	// pros::delay(300);
 	// clamp.set_value(LOW);
+	// pros::delay(300);
+
 	// turnleft90(0.45);
 	// pros::delay(300);
 	// intake.move(-100);
 	// moveTiles(3);
 	// intake.move(0);
-	//AUTON/////BLUE SIDE///////////////////////////////////////////
+	// intakeRank2(1);
+	// //AUTON/////BLUE SIDE///////////////////////////////////////////
 
 
 }
@@ -501,6 +620,8 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+
+int clampButtonPrev = 0; // Stores previous button state
 
 bool autonActivated=false;
 void opcontrol() {
@@ -533,7 +654,7 @@ void opcontrol() {
 		//                  (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
 		//                  (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);  // Prints status of the emulated screen LCDs
 
-
+		
 		updateDoinker();
 		updateClamp();
 
@@ -545,30 +666,48 @@ void opcontrol() {
 
 		int YButtonJustPressed = master.get_digital_new_press(DIGITAL_Y);
 		int XButtonJustPressed = master.get_digital_new_press(DIGITAL_X);
+		int BButtonJustPressed = master.get_digital_new_press(DIGITAL_B);
 
-		int aButtonJustPressed = master.get_digital_new_press(DIGITAL_A);
+		// int aButtonJustPressed = master.get_digital_new_press(DIGITAL_B);
 
-		int LBup = master.get_digital(DIGITAL_UP);
+		int LBup = master.get_digital(DIGITAL_B);
 		int LBdown = master.get_digital(DIGITAL_DOWN);
 		int LBright = master.get_digital(DIGITAL_RIGHT);
 
 		// int L1Button = master.get_digital(DIGITAL_L1);
-		int L2Button = master.get_digital(DIGITAL_L2);
+		int L2Button = master.get_digital(DIGITAL_L1);
 
 		// TickLB(L1Button, L2Button);
 
+		/////////MANUAL CLAMP CODE//////////////////////////////
+			// int clampButton = master.get_digital(DIGITAL_L2);
 
+			// if (clampButton) {
+			// 	clamp.set_value(HIGH);
+			// } else {
+			// 	clamp.set_value(LOW);
+			// }
+		/////////MANUAL CLAMP CODE///////////////////////////
 
+		////////////////////////////////////COLORSORT
+		// double hue = optical_sensor.get_hue();
 
-		// if(YButtonJustPressed) {
-		// 	mogoClampVal = !mogoClampVal;
-		// 	mogoclamp.set_value(mogoClampVal);
+		// Modify the conditions based on color needs
+		// if (hue < 30) {  // Example: Detects red
+		// 	intake.move(0);
+		// 	pros::delay(300);
+		// 	intake.move(-127);
+		// 	pros::delay(200);
+		// 	intake.move(0);
 		// }
+	
+
+//////////////////////////////////////////////
 
 		if(Intakeup) {
-			intake.move(127);
+			intake.move(120);
 		} else if(Intakedown) {
-			intake.move(-127);
+			intake.move(-120);
 		} else {
 			intake.brake();
 		}
@@ -595,12 +734,12 @@ void opcontrol() {
 		// left_mg.move(L);                      // Sets left motor voltage
 		// right_mg.move(R);                     // Sets right motor voltage
 
-		 chassis.tank(L,R);
-        // int leftY = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        // int rightX = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+		chassis.tank(L,R);
+        int leftY = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int rightX = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // // move the robot
-       // chassis.arcade(leftY, rightX);
+    //    chassis.arcade(leftY, rightX);
 
 		if (GameTimer = 10000) {
 		GameTimer = 0;
