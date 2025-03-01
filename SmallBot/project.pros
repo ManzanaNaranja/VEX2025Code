@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "testing 333",
+    "project_name": "tesing 3333",
     "target": "v5",
     "templates": {
       "LemLib": {
@@ -298,7 +298,7 @@
       }
     },
     "upload_options": {
-      "slot": 2,
+      "slot": 1,
       "description": "driver"
     },
     "use_early_access": false
