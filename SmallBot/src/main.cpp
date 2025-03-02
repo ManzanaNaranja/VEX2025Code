@@ -102,7 +102,7 @@ int positions[] = {0,55,150,250};
 
 void TickLB(int Rarrow, int Ybtn, int up, int down, int xbtn) {
     static bool LadyBrownMode = false; // Retain state between function calls
-
+    static bool YbtnHeld = false;
     // Handle state transitions
     if (up || down) {
         currentState = ManualMode; // Enter manual mode if up or down is pressed
@@ -115,9 +115,11 @@ void TickLB(int Rarrow, int Ybtn, int up, int down, int xbtn) {
 	
 	
 	if (LadyBrownMode) {
-		if (up) {
-        currentState = Scoring;} // Enter Scoring state if LadyBrownMode is true and Ybtn is pressed
+		if (Ybtn) {
+            YbtnHeld = true;
+            currentState = Scoring;} 
 		else {
+            YbtnHeld = false;
 			currentState = Load;
 			}
 	}
