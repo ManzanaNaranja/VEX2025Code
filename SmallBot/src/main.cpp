@@ -2,8 +2,7 @@
 #include "lemlib/api.hpp"
 #include "lemlib/chassis/chassis.hpp"
 #include "lemlib/chassis/odom.hpp"
-#include <thread>
-#include "pros/rtos.hpp"
+
 
 /**
  * A callback function for LLEMU's center button.
@@ -19,7 +18,7 @@
 
 // 	master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
 // }
-
+int GameTimer = 0;
 bool l1;
 int SM1_Positions[3] = {0,30,180};
 int lbindex = 0;
@@ -57,8 +56,7 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
 lemlib::Drivetrain drivetrain(&left_mg, &right_mg, 11.5, lemlib::Omniwheel::NEW_275, 600, 2);
 lemlib::Chassis chassis(drivetrain, lateralPIDController, angularPIDController,sensors);
 
-pros::adi::DigitalOut mogoclamp ('A');
-
+pros::ADIDigitalOut mogoclamp ('A');
 
 void on_center_button() {
 	static bool pressed = false;
@@ -70,119 +68,107 @@ void on_center_button() {
 	}
 }
 
+// void nextLB() {
+// 	lbindex++;
+// 	if(lbindex > 2) lbindex = 0;
+// }
 
-bool color_sorting = false;
-void colorSort() {
-    // int colorvalue = 150;///(REJECTING BLUE)
-    int colorvalue = 30;///(REJECTING RED))
 
 
-    while (true) {
-        // Read the hue value from the optical sensor
-        double h = optical_sensor.get_hue();
+// void TickLB(int xbtn, int up, int down) {
 
-        //pros::lcd::print(2, "Hue: %.2f", h);
+// 	if(up || down) {
+// 		currentState = ManualMode;
+// 	}
+// 	else if(xbtn && currentState == Default) {
+// 		currentState = Load;
+// 		pros::lcd::set_text(1, "Load");
+// 	} else if(xbtn && currentState == Load) {
+// 		currentState = Scoring;
+// 		pros::lcd::set_text(1, "scoring");
+// 	} else if(xbtn && currentState == Scoring) {
+// 		currentState = Default;
+// 		pros::lcd::set_text(1, "default");
+// 	} else if(xbtn) {
+// 		currentState = Default;
+//       pros::lcd::set_text(1, "default");
+// 	} 
+	
+// 	if(currentState != ManualMode) {
+// 		LadyBrown.move_absolute(positions[currentState],100);
+// 	} else {
+// 		if(up) {
+// 			// LadyBrown.move_absolute(0,100);
+// 			LadyBrown.move(70);
+// 		} else if(down) {
 
-        // Check the hue value and control the intake motor
-        if (h > colorvalue) {    
-            color_sorting = true;
-            intake.move(0); // Stop the intake motor
-            pros::delay(30);
-            intake.move(127);
-            pros::delay(200);
-        } else {
-            color_sorting=false;
-            // pros::lcd::print(3, "Intake running!");
-            // std::cout << "Intake running!" << std::endl;
-        }
-        // Small delay to avoid flooding the screen/terminal
-        // pros::delay(20);
-    }
-}
+// 			LadyBrown.move(-70);
+// 			// LadyBrown.move(-80);
+// 		} else {
+// 			LadyBrown.brake();
+// 			// LadyBrown.move(0);
+// 			LadyBrown.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+// 			// LadyBrown.move(0);
+// 		}
+// 	}
+	
+// }
+
 
 enum LB_States {Default, Load, ReadyScore, Scoring, ManualMode};
 LB_States currentState = Default;
-const int positions[] = {0, 60, 150, 290};  // Added const for safety
-const int numPositions = sizeof(positions)/sizeof(positions[0]);  // Calculate array size
+int positions[] = {0,60,150,250};
+
 
 void TickLB(int L1, int L2, int up, int down, int xbtn) {
-    // State transition logic
-    if (currentState == ManualMode) {
-        if (xbtn) {
-            currentState = Default;
+
+	if(up || down) {
+		currentState = ManualMode;
+	}
+	else if(L1 && L2) {
+		currentState = Scoring;
+	} else if(L1 && !L2) {
+		currentState = ReadyScore;
+	} else if(L2 && !L1) {
+		currentState = Load;
+	} else if(currentState != ManualMode) {
+		currentState = Default;
+	} else if(xbtn && currentState == ManualMode) {
+		currentState = Default;
+	}
+	
+	if(currentState != ManualMode) {
+		LadyBrownL.move_absolute(positions[currentState],80);
+		LadyBrownR.move_absolute(positions[currentState],80);
+        if (currentState == Scoring) {
+            intake.move(50);
         }
-    } else {
-        if (up || down) {
-            currentState = ManualMode;
-        } else if (L1 && L2) {
-            currentState = Scoring;
-        } else if (L1) {
-            currentState = ReadyScore;
-        } else if (L2) {
-            currentState = Load;
-        } else {
-            currentState = Default;
-        }
-    }
 
-    // State execution logic
-    if (currentState != ManualMode) {
-        // Ensure we don't access out of bounds array positions
-        int targetPos = 0;
-        if (currentState >= 0 && currentState < numPositions) {
-            targetPos = positions[currentState];
-        }
-        
-        LadyBrownL.move_absolute(targetPos, 80);
-        LadyBrownR.move_absolute(targetPos, 80);
-    } else {
-        // Manual control
-        if (up) {
-            LadyBrownL.move(70);
-            LadyBrownR.move(70);
-        } else if (down) {
-            LadyBrownL.move(-70);
-            LadyBrownR.move(-70);
-        } else {
-            LadyBrownL.brake();
-            LadyBrownR.brake();
-        }
-    }
-}
+	} else {
+		if(up) {
+			// LadyBrown.move_absolute(0,100);
+			LadyBrownR.move(70);
+			LadyBrownL.move(70);
 
-void intakeRank(void* color_ptr) {
-	// 	////BLUE = 1, RED = 0, INT COLOR IS WHAT YOU WANT TO SCORE
-    int color = *(int*)color_ptr; // Cast the void pointer back to an int
-    while (true) {
-        double h = optical_sensor.get_hue();
-        if ((color == 0 && h > 150) || (color == 1 && h < 30)) {
-			intake.move(100);
-            intake.move(0);
-            pros::delay(200);
-            intake.move(127);
-            pros::delay(200);
-            intake.move(-127);
-            pros::delay(200);
-            intake.move(0);
-        } else if ((color == 0 && h < 30) || (color == 1 && h > 150)) {
-            intake.move(-100);
-            pros::delay(400);
-            intake.move(0);
-        }
-        pros::delay(10);
-    }
-	delete (int*)color_ptr;
-}
+		} else if(down) {
 
+			LadyBrownR.move(-70);
+			LadyBrownL.move(-70);
 
-void startIntakeRankThread(int color) {
-    // Dynamically allocate memory for the color parameter to pass to the thread
-    int* color_ptr = new int(color);
+			// LadyBrown.move(-80);
+		} else {
+			LadyBrownL.brake();
+			LadyBrownR.brake();
 
-    // Create a new thread to run intakeRank
-    pros::Task intakeRankTask(intakeRank, color_ptr, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake Rank Task");
-}
+			// LadyBrown.move(0);
+			LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+			LadyBrownL.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 
+			// LadyBrown.move(0);
+		}
+	}
+	
+}	
 
 
 
@@ -195,14 +181,37 @@ void startIntakeRankThread(int color) {
 void initialize() {
 	pros::lcd::initialize();
 	chassis.calibrate();
+	pros::lcd::set_text(1, "Hello PROS User!");
 	pros::lcd::register_btn1_cb(on_center_button);
   	pros::Optical optical_sensor({13});
 	optical_sensor.set_integration_time(10);
+	optical_sensor.set_led_pwm(50);
 	LadyBrownL.tare_position();
 	LadyBrownR.tare_position();
 
 
 
+	//////////////////////////////////COLOR SENSOR
+
+            // double hue = optical_sensor.get_hue();
+
+            // // Modify the conditions based on color needs
+            // if (hue > 150) {  // Example: Detects blue
+            //     intake.move(-127);
+            //     pros::delay(1000);  // Adjust time as needed
+            //     intake.move(127);
+            // } 
+            // else if (hue < 30) {  // Example: Detects red
+            //     intake.move(127);
+            //     pros::delay(500);
+            //     intake.move(0);
+            // }
+
+            // pros::delay(100);  // Prevent CPU overload
+	
+
+
+	//////////////////////////////////////
 }
 
 
@@ -231,46 +240,32 @@ bool activated = true;
 int clamptimer1 = 0;
 int clamptimer2 = 1;
 bool open =true;
-int lastLimVal = 0; // Stores the previous state of the limit switch
-int clampState = 0; // 0 = clamp open, 1 = clamp closed
-bool lastL1State = 0; // Stores the previous state of the L1 button
-
-inline void updateClamp() {
-  // Read inputs
-int limVal = lswitch.get_value(); // Current limit switch state
-int L1Button = master.get_digital(DIGITAL_L1); // Current L1 button state
-
-// If the limit switch is triggered (active)
-if (limVal) {
-    // Clamp should be disabled (set to 0)
-    clamp.set_value(0);
-    
-    // If the L1 button is pressed, enable the clamp (set to 1)
-    if (L1Button) {
-        clamp.set_value(1);
-    }
-}
-// If the limit switch is not triggered and L1 button is not pressed
-else if (!limVal && !L1Button) {
-    // Clamp should be enabled (set to 1)
-    clamp.set_value(1);
-}
-// If the limit switch is not triggered but the L1 button is pressed
-else {
-    // Enable the clamp (set to 1)
-    clamp.set_value(1);
-}
+int lastLimVal = 0;
+int ccc = 0;
 
 
-    
+
+inline void updateClamp()
+{	
+	int limVal = lswitch.get_value();
+	int L1Button = master.get_digital(DIGITAL_L2);
+	int yyy = master.get_digital(DIGITAL_B);
+	if(lastLimVal == 0 && limVal == 1 || yyy == 1) {
+		ccc = 0;
+	} else if (L1Button) {
+		ccc = 1;
+	} 
+	clamp.set_value(ccc);
+	lastLimVal = limVal;
 }
+
 
 bool l2 = false;
 bool activatedDoinker = false;
 inline void updateDoinker()
 {
 	
-int L2Button = master.get_digital(DIGITAL_L2);
+int L2Button = master.get_digital(DIGITAL_L1);
 	if (L2Button) {
 		doinker.set_value(1);
 	}
@@ -294,38 +289,38 @@ int L2Button = master.get_digital(DIGITAL_L2);
  * from where it left off.
  */
 //////////////////////////AUTON FUNCTIONS///////////////////////////
-// void intakeRank(int color) {
-// 	////BLUE = 1, RED = 0, INT COLOR IS WHAT YOU WANT TO SCORE
-// 	intake.move(-100);
-// 	while(true) {
-// 		double h = optical_sensor.get_hue();
-// 		if((color == 0 && h > 150) || (color == 1 && h < 30)) {
-// 			pros::delay(200);
-// 			intake.move(0);
-// 			pros::delay(200);
-// 			intake.move(127);
-// 			pros::delay(200);
-// 			intake.move(-127);
-// 			pros::delay(200);
-// 			intake.move(0);
-// 			break;
-// 		}
-// 		else if ((color == 0 && h <30) || (color == 1 && h > 150))
-// 		{
+void intakeRank2(int color) {
+	////BLUE = 1, RED = 0, INT COLOR IS WHAT YOU WANT TO SCORE
+	intake.move(-100);
+	int timeout = pros::millis() + 2000;
+	while(pros::millis() < timeout) {
+		double h = optical_sensor.get_hue();
+		if((color == 0 && h > 150) || (color == 1 && h < 30)) {
+			pros::delay(200);
+			intake.move(0);
+			pros::delay(200);
+			intake.move(127);
+			pros::delay(200);
+			intake.move(-127);
+			pros::delay(200);
+			intake.move(0);
+			break;
+		}
+		else if ((color == 0 && h <30) || (color == 1 && h > 150))
+		{
 
-// 			intake.move(-100);
-// 			pros::delay(400);
-// 			intake.move(0);
+			intake.move(-100);
+			pros::delay(400);
+			intake.move(0);
 
-// 			break;
-// 		}
+			break;
+		}
 		
-// 		pros::delay(10);
+		pros::delay(10);
 
 
-// 	}
-// }
-
+	}
+}
 
 void halfintake(int color) {
 	////BLUE = 1, RED = 0
@@ -346,9 +341,11 @@ void halfintake(int color) {
     intake.move(0); // Stop the intake
 }
 
+
 //////////////////////////AUTON FUNCTIONS////////////////////////////
 
 void autonomous() {
+	
 }
 
 /**
@@ -369,18 +366,14 @@ int clampButtonPrev = 0; // Stores previous button state
 
 bool autonActivated=false;
 void opcontrol() {
-    LadyBrownL.tare_position();
-    LadyBrownR.tare_position();
 	LadyBrownL.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	LadyBrownR.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 
-	// LadyBrownL.tare_position();
-	// LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+	LadyBrownL.tare_position();
+	LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 
-	// LadyBrownL.tare_position();
-	// LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-
-	// pros::Task colorSortThread(colorSort);
+	LadyBrownL.tare_position();
+	LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 
 	//PRACTICE//AUTON/////////////////////////////////////////////////
 // 	while (!autonActivated) {
@@ -394,36 +387,28 @@ void opcontrol() {
 //     pros::delay(20);
 // }
 	//PRACTICE//AUTON/////////////////////////////////////////////////
-   
-    pros::adi::DigitalOut LBButton ('G');
-    
 
 	while (true) {
-        LadyBrownL.tare_position();
-        LadyBrownR.tare_position();
 
 		updateDoinker();
 		updateClamp();
-        optical_sensor.set_led_pwm(100);
 
 		int L = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
 		int R = master.get_analog(ANALOG_RIGHT_Y);  // Gets the turn left/right from right joystick
 
-		int Intakeup = master.get_digital(DIGITAL_R1);
-		int Intakedown = master.get_digital(DIGITAL_R2);
+		int Intakeup = master.get_digital(DIGITAL_R2);
+		int Intakedown = master.get_digital(DIGITAL_R1);
 
-		int YButtonJustPressed = master.get_digital(DIGITAL_Y);
+		int YButtonJustPressed = master.get_digital_new_press(DIGITAL_Y);
 		int XButtonJustPressed = master.get_digital_new_press(DIGITAL_X);
 		int BButtonJustPressed = master.get_digital_new_press(DIGITAL_B);
 		int AButtonJustPressed = master.get_digital_new_press(DIGITAL_A);
-  
 
 		// int aButtonJustPressed = master.get_digital_new_press(DIGITAL_B);
 
-		int LBup = master.get_digital(DIGITAL_UP);
+		int LBup = master.get_digital(DIGITAL_B);
 		int LBdown = master.get_digital(DIGITAL_DOWN);
 		int LBright = master.get_digital(DIGITAL_RIGHT);
-		int Left = master.get_digital(DIGITAL_LEFT);
 
 		int L1Button = master.get_digital(DIGITAL_L1);
 		int L2Button = master.get_digital(DIGITAL_L2);
@@ -431,7 +416,7 @@ void opcontrol() {
 		// TickLB(L1Button, L2Button);
 
 		/////////MANUAL CLAMP CODE//////////////////////////////
-			// int clampButton = master.get_digital(DIGITAL_L1);
+			// int clampButton = master.get_digital(DIGITAL_L2);
 
 			// if (clampButton) {
 			// 	clamp.set_value(HIGH);
@@ -440,35 +425,32 @@ void opcontrol() {
 			// }
 		/////////MANUAL CLAMP CODE///////////////////////////
 
+
+
 		
-		if(Intakeup &&!color_sorting) {
-			intake.move(110);
-		} else if(Intakedown &&!color_sorting) {
-			intake.move(-110);
+		if(Intakeup) {
+			intake.move(120);
+		} else if(Intakedown) {
+			intake.move(-120);
 		} else {
 			intake.brake();
 		}
 
-		TickLB(LBright,YButtonJustPressed, LBup, LBdown,XButtonJustPressed);
-        
-        // MANUAL LB MOVEMENT
-        // if (LBup) {
-        //     LadyBrownL.move(50);
-        //     LadyBrownR.move(50);
-        // }
-        // else if (LBdown) {
-        //     LadyBrownL.move(-50);
-        //     LadyBrownR.move(-50);
-        // }
-        // else {
-        //     LadyBrownL.move(0);
-        //     LadyBrownR.move(0);
-        // }
+		TickLB(L1Button,L2Button, LBdown, LBup,XButtonJustPressed);
 
-        // if (Left) {
-        //     LadyBrownL.move_absolute(100, 100);
-        //     LadyBrownR.move_absolute(100, 100);
-        // }
+		// double h = optical_sensor.get_hue();
+		// if(h > 150) {
+		// 	pros::delay(200);
+		// 	intake.move(0);
+		// 	pros::delay(200);
+		// 	intake.move(127);
+		// 	pros::delay(200);
+		// 	intake.move(-127);
+		// 	pros::delay(200);
+		// 	intake.move(0);
+		// 	break;
+		// }
+
 
 
 		// left_mg.move(L);                      // Sets left motor voltage
@@ -481,8 +463,12 @@ void opcontrol() {
         // // move the robot
     //    chassis.arcade(leftY, rightX);
 
-		
-		pros::delay(10);    
+		if (GameTimer = 10000) {
+		GameTimer = 0;
+		}
+
+		GameTimer += 20;   
+		pros::delay(20);
                            // Run for 20 ms then update
 	}
 }
