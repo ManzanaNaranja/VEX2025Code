@@ -57,8 +57,7 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
 lemlib::Drivetrain drivetrain(&left_mg, &right_mg, 11.5, lemlib::Omniwheel::NEW_275, 600, 2);
 lemlib::Chassis chassis(drivetrain, lateralPIDController, angularPIDController,sensors);
 
-pros::ADIDigitalOut mogoclamp ('A');
-pros::ADIDigitalOut doinker ('H');
+pros::adi::DigitalOut mogoclamp ('A');
 
 
 void on_center_button() {
@@ -103,35 +102,52 @@ void colorSort() {
 
 enum LB_States {Default, Load, ReadyScore, Scoring, ManualMode};
 LB_States currentState = Default;
-int positions[] = {0,60,150,290};
+const int positions[] = {0, 60, 150, 290};  // Added const for safety
+const int numPositions = sizeof(positions)/sizeof(positions[0]);  // Calculate array size
 
-void TickLB(int Rarrow, int Ybtn, int up, int down, int xbtn) {
-    static bool LadyBrownMode = false; // Retain state between function calls
-
-    //0,55,150,270
-
-    // Handle state transitions
-    if (Rarrow) {
-        LadyBrownMode = !LadyBrownMode; // Toggle LadyBrownMode
+void TickLB(int L1, int L2, int up, int down, int xbtn) {
+    // State transition logic
+    if (currentState == ManualMode) {
+        if (xbtn) {
+            currentState = Default;
+        }
+    } else {
+        if (up || down) {
+            currentState = ManualMode;
+        } else if (L1 && L2) {
+            currentState = Scoring;
+        } else if (L1) {
+            currentState = ReadyScore;
+        } else if (L2) {
+            currentState = Load;
+        } else {
+            currentState = Default;
+        }
     }
 
-	if (LadyBrownMode) {
-		if (Ybtn) {
-        currentState = Scoring;
+    // State execution logic
+    if (currentState != ManualMode) {
+        // Ensure we don't access out of bounds array positions
+        int targetPos = 0;
+        if (currentState >= 0 && currentState < numPositions) {
+            targetPos = positions[currentState];
+        }
         
-    } // Enter Scoring state if LadyBrownMode is true and Ybtn is pressed
-		else {
-			currentState = Load;
-			}
-	}
-    else if(!up||!down && !LadyBrownMode){
-        currentState = Default;
+        LadyBrownL.move_absolute(targetPos, 80);
+        LadyBrownR.move_absolute(targetPos, 80);
+    } else {
+        // Manual control
+        if (up) {
+            LadyBrownL.move(70);
+            LadyBrownR.move(70);
+        } else if (down) {
+            LadyBrownL.move(-70);
+            LadyBrownR.move(-70);
+        } else {
+            LadyBrownL.brake();
+            LadyBrownR.brake();
+        }
     }
-        LadyBrownL.move_absolute(positions[currentState], 100);
-        LadyBrownR.move_absolute(positions[currentState], 100);
-        if (currentState == Scoring) {
-            intake.move(-127);
-        } 
 }
 
 void intakeRank(void* color_ptr) {
@@ -358,11 +374,11 @@ void opcontrol() {
 	LadyBrownL.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	LadyBrownR.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 
-	LadyBrownL.tare_position();
-	LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+	// LadyBrownL.tare_position();
+	// LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 
-	LadyBrownL.tare_position();
-	LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+	// LadyBrownL.tare_position();
+	// LadyBrownR.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 
 	// pros::Task colorSortThread(colorSort);
 
@@ -379,7 +395,7 @@ void opcontrol() {
 // }
 	//PRACTICE//AUTON/////////////////////////////////////////////////
    
-    pros::ADIDigitalIn LBButton ('G');
+    pros::adi::DigitalOut LBButton ('G');
     
 
 	while (true) {
@@ -389,14 +405,6 @@ void opcontrol() {
 		updateDoinker();
 		updateClamp();
         optical_sensor.set_led_pwm(100);
-        int LBButtonState = LBButton.get_value();
-
-        // if(LBButtonState == 5)
-        // {
-        //     LadyBrownL.tare_position();
-        //     LadyBrownR.tare_position();
-        // }
-
 
 		int L = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
 		int R = master.get_analog(ANALOG_RIGHT_Y);  // Gets the turn left/right from right joystick
@@ -415,6 +423,7 @@ void opcontrol() {
 		int LBup = master.get_digital(DIGITAL_UP);
 		int LBdown = master.get_digital(DIGITAL_DOWN);
 		int LBright = master.get_digital(DIGITAL_RIGHT);
+		int Left = master.get_digital(DIGITAL_LEFT);
 
 		int L1Button = master.get_digital(DIGITAL_L1);
 		int L2Button = master.get_digital(DIGITAL_L2);
@@ -441,6 +450,25 @@ void opcontrol() {
 		}
 
 		TickLB(LBright,YButtonJustPressed, LBup, LBdown,XButtonJustPressed);
+        
+        // MANUAL LB MOVEMENT
+        // if (LBup) {
+        //     LadyBrownL.move(50);
+        //     LadyBrownR.move(50);
+        // }
+        // else if (LBdown) {
+        //     LadyBrownL.move(-50);
+        //     LadyBrownR.move(-50);
+        // }
+        // else {
+        //     LadyBrownL.move(0);
+        //     LadyBrownR.move(0);
+        // }
+
+        // if (Left) {
+        //     LadyBrownL.move_absolute(100, 100);
+        //     LadyBrownR.move_absolute(100, 100);
+        // }
 
 
 		// left_mg.move(L);                      // Sets left motor voltage
